@@ -1,5 +1,5 @@
 # JAVACHAINRING 🚴‍♂️📊
-*A Java-based tool for analyzing cycling performance from Garmin FIT files*
+*A Java-based tool for analyzin cycling gear usage from Garmin FIT files*
 
 ---
 
