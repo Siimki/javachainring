@@ -6,13 +6,19 @@
 ## 📌 About
 JAVACHAINRING is a Java-based application that processes **Garmin FIT files** and extracts key cycling metrics. It tracks **gear usage**, **speed**, **cadence**, and **power output** over time, allowing for **detailed performance analysis**.
 
-Your electronic groupset has to be connected to the bike computer.
+Your electronic groupset has to be connected to the bike computer. Program was developed using Garmin and Magene cycling computer files. 
 
 Most useful way to use this tool is to analyze your gear usage after race. Idea is to avoid crosschaining as much as possible. 
 
-
+## Context to the idea
 ![Gear Statistics](app/resources/chainline.jpg)
 
+Here we can say that gears **1st, 2nd, 11th, 12th** are the most unefficient ones. Gears **3rd, 10th** are acceptable.
+
+everything else is very good. A lot of time was spent in the gears of **11th, 12th**. It can be good idea to change the chainring for bigger one because we spend too much time in the lower part of cassette and almost no time in the higher part of cassette.
+
+
+![Stats](app/resources/screen.png)
 
 ---
 
