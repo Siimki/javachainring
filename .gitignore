@@ -10,6 +10,7 @@ app/resources/*.FIT
 # Dependency caching (optional)
 .gradle/
 build/
+.DS_Store
 
 .vscode/
 
