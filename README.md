@@ -107,3 +107,9 @@ Or via **Gradle**:
 
 ---
 
+## Reasearch paper on drivetrain efficiency 
+
+In this reasearch you can find how big losses you have with crosschaining and using suboptimal chainrings and sprockets.
+
+https://cdn.shopify.com/s/files/1/0726/7542/6606/files/cross-chaining-and-ring-size-report.pdf?v=1687253624
+
