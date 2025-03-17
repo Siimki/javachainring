@@ -1,18 +1,9 @@
-# Ignore Gradle project-specific cache directory
 .gradle
-
-# Ignore Gradle build output directory
 build
-
-# FIT test files (optional: keep if needed)
 app/resources/*.FIT
-
-# Dependency caching (optional)
 .gradle/
 build/
 .DS_Store
-
+app/.DS_Store
 .vscode/
-
-# Local libraries
 app/libs/
