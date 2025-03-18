@@ -42,7 +42,7 @@ public class App {
         }
 
         processFitFile(fitFile);
-        printRideSummary();
+       // printRideSummary();
         Map<String, GearStats> gearStatsMap = analyzeGearUsage();
         printGearUsage(gearStatsMap);
         System.out.println("\n --- End of program! ---");
@@ -122,7 +122,7 @@ public class App {
             mesgBroadcaster.addListener(new MesgListener() {
                 @Override
                 public void onMesg(Mesg mesg) {
-                    System.out.println("📩 Message received: " + mesg.getName());
+                 //   System.out.println("📩 Message received: " + mesg.getName());
 
                     switch (mesg.getName()) {
                         case "record" -> handleRecordMessage(mesg);
@@ -147,6 +147,8 @@ public class App {
         RideData data = parseRecord(mesg); // front, back miss
         if (data != null) { 
             rideRecords.add(data);
+        } else {
+            System.out.println("Data is null");
         }
     }
 
@@ -158,7 +160,7 @@ public class App {
             if (field.getName().equals("event")) {
                 eventValue = (Short) field.getValue();
                 eventType = com.garmin.fit.Event.getByValue(eventValue).toString();
-                System.out.println("Event detected" + eventType);
+              //  System.out.println("Event detected" + eventType);
             }
         }
 
@@ -172,7 +174,7 @@ public class App {
         for(var field : mesg.getFields()) {
             if ("rear_gear_num".equals(field.getName())) {
                 currentRearGear = (Short) field.getValue();
-                System.out.println("New rear gear:  " + currentRearGear);
+             // gear:  " + currentRearGear);
             }
         }
     }
@@ -193,9 +195,15 @@ public class App {
 
     private static RideData parseRecord(Mesg mesg) {
         long timestamp = getFieldLong(mesg, "timestamp", (int) 0L);
-        BigDecimal speed = getFieldBigDecimal(mesg, "speed", BigDecimal.ZERO);
+        //Lets see how this behaves. I changed it from speed to enhanced_speed. Some files had no speed field.  
+        BigDecimal speed = getFieldBigDecimal(mesg, "enhanced_speed", BigDecimal.ZERO); 
         int cadence = getFieldInt(mesg, "cadence", 0);
         int power = getFieldInt(mesg, "power", 0);
+
+        // 🔄 debug
+        // mesg.getFields().forEach(field -> {
+        //     System.out.println("Field Name: " + field.getName() + " → Value: " + field.getValue());
+        // });
 
         return new RideData(timestamp, currentFrontGear, currentRearGear, speed, cadence, power);
     }
@@ -226,7 +234,6 @@ public class App {
         return localDateTime.format(formatter);
 
     }
-
 
 }
 
