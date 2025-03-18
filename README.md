@@ -85,6 +85,12 @@ Or via **Gradle**:
 ```sh
 ./gradlew run --args="resources/example.FIT"
 ```
+Optionally you can add minPower and minCadence arguments. Incase you want to calculate your gearusage only when cadence is 0RPM  and power is less than 100W. You can add any custom values 
+
+Or via **Gradle**:
+```sh
+./gradlew run --args="resources/example.FIT 0 100"
+```
 
 ---
 

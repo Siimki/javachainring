@@ -41,17 +41,37 @@ public class App {
             return;
         }
 
+        Integer minCadence = (args.length > 1) ? tryParseInt(args[1]) : null;
+        Integer minPower = (args.length > 2) ? tryParseInt(args[2]) : null;
+
         processFitFile(fitFile);
        // printRideSummary();
-        Map<String, GearStats> gearStatsMap = analyzeGearUsage();
+        Map<String, GearStats> gearStatsMap = analyzeGearUsage(minCadence, minPower);
         printGearUsage(gearStatsMap);
         System.out.println("\n --- End of program! ---");
     }
 
-    private static Map<String, GearStats> analyzeGearUsage() {
+    private static Integer tryParseInt(String value) {
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException e) {
+            System.err.println("Warning: Invalid number '" + value + "' ignored.");
+            return null;
+        }
+    }
+
+    private static Map<String, GearStats> analyzeGearUsage(Integer minCadence, Integer minPower) {
         Map<String, GearStats> gearStatsMap = new HashMap<>();
         
         for (RideData ride : rideRecords) {
+
+            if (minCadence != null && ride.getCadence() < minCadence) {
+                continue;
+            }
+            if (minPower != null && ride.getPower() < minPower) {
+                continue;
+            }
+
             String gearKey = ride.getFrontGear() + ":" + ride.getRearGear();
 
             gearStatsMap.putIfAbsent(gearKey, new GearStats());
@@ -62,10 +82,10 @@ public class App {
             stats.totalPower += ride.getPower();
             stats.totalTimeSeconds++;
             stats.numRecords++;
-
         }
         return gearStatsMap;
     }
+
 
     private static void printGearUsage(Map<String, GearStats> gearStatsMap) {
         System.out.println(" Gear usage:");
