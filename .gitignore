@@ -8,9 +8,3 @@ app/.DS_Store
 .vscode/
 app/libs/
 app/src/main/java/org/example/Estimator.java
-# Ignore everything
-*
-
-# But keep README.md
-!README.md
-!.gitignore
