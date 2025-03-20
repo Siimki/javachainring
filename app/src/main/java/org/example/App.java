@@ -19,7 +19,13 @@ import com.garmin.fit.Decode;
 import com.garmin.fit.Mesg;
 import com.garmin.fit.MesgBroadcaster;
 import com.garmin.fit.MesgListener;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
+
+@SpringBootApplication
+@ComponentScan("org.example.controllers")
 public class App {
 
     private static final List<RideData> rideRecords = new ArrayList<>();
@@ -33,8 +39,8 @@ public class App {
         }
 
         File fitFile = new File(args[0]);
-        System.out.println("Attempting to open file: " + fitFile.getAbsolutePath());
-
+       // System.out.println("Attempting to open file: " + fitFile.getAbsolutePath());
+        System.out.println();
         if (!fitFile.exists()) {
             System.err.println("Error: FIT file not found!");
             return;
@@ -101,7 +107,7 @@ public class App {
 
     //Clunky? 
     private static void printGearUsage(Map<String, GearStats> gearStatsMap, UserConfig config) {
-        System.out.println("📊 Gear usage statistics:");
+        System.out.println("📊 Gear usage statistics: \n");
 
         List<Map.Entry<String, GearStats>> sortedGears = new ArrayList<>(gearStatsMap.entrySet());
         sortedGears.sort(Comparator.comparingInt(entry
@@ -217,7 +223,7 @@ public class App {
         System.out.println("\n Total records: " + rideRecords.size());
     }
 
-    private static void processFitFile(File fitFile) {
+    public static void processFitFile(File fitFile) {
         try (InputStream fitStream = new FileInputStream(fitFile)) {
             Decode decode = new Decode();
             MesgBroadcaster mesgBroadcaster = new MesgBroadcaster(decode);
@@ -335,5 +341,9 @@ public class App {
 
         return localDateTime.format(formatter);
     }
+    public static List<RideData> getRideRecords() {
+        return rideRecords;
+    }
 
 }
+

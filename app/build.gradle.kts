@@ -1,4 +1,7 @@
 plugins {
+    id("org.springframework.boot") version "3.2.3"
+    id("io.spring.dependency-management") version "1.1.4"
+    id("java")
     application
 }
 
@@ -12,9 +15,11 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Garmin FIT SDK from local JAR
-dependencies {
+
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter")
     implementation(files("libs/fit.jar")) // ✅ Ensures fit.jar is directly included
-}
+
 
     // Example Guava dependency
     implementation("com.google.guava:guava:32.0.1-jre")
@@ -27,7 +32,7 @@ java {
 }
 
 application {
-    mainClass.set("org.example.App")
+    mainClass.set("org.example.WebServer")
 }
 
 tasks.named<Test>("test") {
