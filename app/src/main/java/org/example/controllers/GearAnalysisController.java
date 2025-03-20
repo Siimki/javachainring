@@ -51,6 +51,12 @@ public class GearAnalysisController {
     private File convertMultipartFile(MultipartFile file) throws Exception {
         Path tempFile = Files.createTempFile("upload_", file.getOriginalFilename());
         Files.copy(file.getInputStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
-        return tempFile.toFile();
+        File finalFile = tempFile.toFile();
+    
+        // ✅ Delete file when Java exits
+        finalFile.deleteOnExit(); 
+    
+        return finalFile;
     }
+    
 }

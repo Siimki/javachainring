@@ -15,13 +15,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+
 import com.garmin.fit.Decode;
 import com.garmin.fit.Mesg;
 import com.garmin.fit.MesgBroadcaster;
 import com.garmin.fit.MesgListener;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
 
 
 @SpringBootApplication
@@ -255,15 +255,21 @@ public class App {
 
         } catch (Exception e) {
             System.err.println("Error reading FIT file: " + e.getMessage());
-        }
+        } 
     }
 
+    private static final int MAX_RECORDS = 10000; 
+
     private static void handleRecordMessage(Mesg mesg) {
-        RideData data = parseRecord(mesg); // front, back miss
+        RideData data = parseRecord(mesg);
         if (data != null) {
+            if (rideRecords.size() > MAX_RECORDS) {
+                rideRecords.remove(0); //Remove oldest entry if too many
+            }
             rideRecords.add(data);
         }
     }
+    
 
     private static void handleEventMessage(Mesg mesg) {
 

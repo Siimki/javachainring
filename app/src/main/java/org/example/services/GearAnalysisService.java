@@ -18,29 +18,33 @@ public class GearAnalysisService {
             // Process FIT file
             App.processFitFile(fitFile);
             List<RideData> rideRecords = App.getRideRecords();
-
+    
             if (rideRecords.isEmpty()) {
                 return Map.of("error", "No ride data found in the FIT file.");
             }
-
+    
             UserConfig defaultConfig = new UserConfig(null, null, "12Shimano34", 53, 39);
             Map<String, GearStats> gearStatsMap = analyzeGearUsage(defaultConfig, rideRecords);
-
-            // Prepare formatted output
+    
+            // Format output
             List<Map<String, Object>> formattedGearData = formatGearData(gearStatsMap, defaultConfig);
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("status", "success");
-            result.put("message", "File processed successfully");
-            result.put("gears_used", gearStatsMap.size());
-            result.put("gear_analysis", formattedGearData);
-            
-            return result;
+    
+            // ✅ Free memory
+            rideRecords.clear(); // 🚀 Clears ride data after processing
+            System.gc(); // ✅ Suggests Java to free memory
+    
+            return Map.of(
+                "status", "success",
+                "message", "File processed successfully",
+                "gears_used", gearStatsMap.size(),
+                "gear_analysis", formattedGearData
+            );
         } catch (Exception e) {
             e.printStackTrace();
             return Map.of("error", "Failed to process the FIT file");
         }
     }
+    
 
     private Map<String, GearStats> analyzeGearUsage(UserConfig config, List<RideData> rideRecords) {
         Map<String, GearStats> gearStatsMap = new HashMap<>();
