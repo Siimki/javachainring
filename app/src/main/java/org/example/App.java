@@ -57,10 +57,13 @@ public class App {
 
     public static Map<String, Object> analyzeFile(File fitFile, UserConfig userConfig) {
         try {
-            // ✅ Process FIT File
-
-            // ✅ Clear previous ride records before analyzing a new file
-             rideRecords.clear();  
+            long maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
+            if (fitFile.length() > maxFileSize) {
+                return Map.of("error", "File is too large. Maximum allowed size is 10MB.");
+            }
+            rideRecords.clear();  
+            System.gc(); // Let see 
+            
 
             processFitFile(fitFile);
             List<RideData> rideRecords = getRideRecords();
@@ -69,7 +72,6 @@ public class App {
                 return Map.of("error", "No ride data found in the FIT file.");
             }
     
-            // ✅ Perform Gear Analysis
             Map<String, GearStats> gearStatsMap = analyzeGearUsage(userConfig);
             return getGearUsageAsJson(gearStatsMap, userConfig);
     
