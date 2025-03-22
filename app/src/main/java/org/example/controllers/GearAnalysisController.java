@@ -48,6 +48,15 @@ public class GearAnalysisController {
             return ResponseEntity.ok(analysisResult);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "File processing failed"));
+        } finally {
+            // Delete the temporary file immediately after processing
+            if (convertedFile != null && convertedFile.exists()) {
+                try {
+                    Files.deleteIfExists(convertedFile.toPath());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
     }
     
@@ -65,7 +74,7 @@ public class GearAnalysisController {
         File finalFile = tempFile.toFile();
     
         // ✅ Delete file when Java exits
-        finalFile.deleteOnExit(); 
+       // finalFile.deleteOnExit(); ??
     
         return finalFile;
     }
