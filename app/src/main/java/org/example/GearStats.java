@@ -1,6 +1,8 @@
 package org.example;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GearStats {
     BigDecimal totalSpeed = BigDecimal.ZERO;
@@ -36,4 +38,15 @@ public class GearStats {
     public int getNumRecords() {
         return numRecords;
     }
+
+        public Map<String, Object> toJson() {
+            Map<String, Object> json = new HashMap<>();
+            json.put("totalSpeed", totalSpeed);
+            json.put("totalCadence", totalCadence);
+            json.put("totalPower", totalPower);
+            json.put("totalTimeSeconds", totalTimeSeconds);
+            json.put("numRecords", numRecords);
+            return json;
+        }
+    
 }

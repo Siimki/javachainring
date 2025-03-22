@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
+import org.example.App;
+import org.example.UserConfig;
 import org.example.services.GearAnalysisService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,18 +31,27 @@ public class GearAnalysisController {
     }
 
     @PostMapping("/analyze")
-    public ResponseEntity<?> analyzeGearUsage(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> analyzeGearUsage(
+        @RequestParam("file") MultipartFile file,
+        @RequestParam("bigChainring") Integer bigChainring,
+        @RequestParam("smallChainring") Integer smallChainring,
+        @RequestParam("cassette") String cassette,
+        @RequestParam(value = "minCadence", required = false) Integer minCadence,
+        @RequestParam(value = "minPower", required = false) Integer minPower
+    ) {
         try {
-            // Convert MultipartFile to File
             File convertedFile = convertMultipartFile(file);
-
-            // Process file in the service
-            Map<String, Object> analysisResult = gearAnalysisService.processFitFile(convertedFile);
+            
+            UserConfig userConfig = new UserConfig(minCadence, minPower, cassette, bigChainring, smallChainring);
+            Map<String, Object> analysisResult = App.analyzeFile(convertedFile, userConfig);
+    
             return ResponseEntity.ok(analysisResult);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "File processing failed"));
         }
     }
+    
+
 
 
     @GetMapping("/test")
