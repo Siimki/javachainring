@@ -39,15 +39,15 @@ public class GearAnalysisController {
         @RequestParam(value = "minCadence", required = false) Integer minCadence,
         @RequestParam(value = "minPower", required = false) Integer minPower
     ) {
+        File convertedFile = null; // Declare here so it's accessible in try & finally
         try {
-            File convertedFile = convertMultipartFile(file);
-            
+            convertedFile = convertMultipartFile(file);
             UserConfig userConfig = new UserConfig(minCadence, minPower, cassette, bigChainring, smallChainring);
             Map<String, Object> analysisResult = App.analyzeFile(convertedFile, userConfig);
-    
             return ResponseEntity.ok(analysisResult);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "File processing failed"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(Map.of("error", "File processing failed"));
         } finally {
             // Delete the temporary file immediately after processing
             if (convertedFile != null && convertedFile.exists()) {
