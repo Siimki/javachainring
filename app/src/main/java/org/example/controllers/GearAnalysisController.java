@@ -37,12 +37,14 @@ public class GearAnalysisController {
         @RequestParam("smallChainring") Integer smallChainring,
         @RequestParam("cassette") String cassette,
         @RequestParam(value = "minCadence", required = false) Integer minCadence,
-        @RequestParam(value = "minPower", required = false) Integer minPower
+        @RequestParam(value = "minPower", required = false) Integer minPower,
+        @RequestParam(value = "oneBySetup", required = false) String oneBySetup
     ) {
         File convertedFile = null; // Declare here so it's accessible in try & finally
         try {
             convertedFile = convertMultipartFile(file);
-            UserConfig userConfig = new UserConfig(minCadence, minPower, cassette, bigChainring, smallChainring);
+            Boolean oneBySetupBoolean = Boolean.valueOf(oneBySetup);
+            UserConfig userConfig = new UserConfig(minCadence, minPower, cassette, bigChainring, smallChainring, oneBySetupBoolean);
             Map<String, Object> analysisResult = App.analyzeFile(convertedFile, userConfig);
             return ResponseEntity.ok(analysisResult);
         } catch (Exception e) {

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.ComponentScan;
 
 import com.garmin.fit.Decode;
@@ -27,33 +28,9 @@ import com.garmin.fit.MesgListener;
 @ComponentScan("org.example.controllers")
 public class App {
 
-    
-
     private static final List<RideData> rideRecords = new ArrayList<>();
     private static Short currentRearGear = 0;
-    private static Short currentFrontGear = 2; //Assume it is on the big chainring
-
-    // public static void main(String[] args) {
-    //     if (args.length < 1) {
-    //         printUsage();
-    //         return;
-    //     }
-
-    //     File fitFile = new File(args[0]);
-    //    // System.out.println("Attempting to open file: " + fitFile.getAbsolutePath());
-    //     System.out.println();
-    //     if (!fitFile.exists()) {
-    //         System.err.println("Error: FIT file not found!");
-    //         return;
-    //     }
-
-    //     UserConfig userConfig = parseArguments(args);
-    //     processFitFile(fitFile);
-    //     Map<String, GearStats> gearStatsMap = analyzeGearUsage(userConfig);
-    //     printGearUsage(gearStatsMap, userConfig);
-    //     printDrivetrainInfo(userConfig);
-    //     System.out.println("\n --- End of program! ---");
-    // }
+    private static Short currentFrontGear = 2; //Assume it is on the big chainring when starting
 
     public static Map<String, Object> analyzeFile(File fitFile, UserConfig userConfig) {
         try {
@@ -62,8 +39,10 @@ public class App {
                 return Map.of("error", "File is too large. Maximum allowed size is 10MB.");
             }
             rideRecords.clear();  
-            System.gc(); // Let see 
-            
+            System.gc(); // Should fix memory leak
+            // reset gears as well. 
+            currentRearGear = 0;
+            currentFrontGear = 2; 
 
             processFitFile(fitFile);
             List<RideData> rideRecords = getRideRecords();
@@ -74,39 +53,10 @@ public class App {
     
             Map<String, GearStats> gearStatsMap = analyzeGearUsage(userConfig);
             return getGearUsageAsJson(gearStatsMap, userConfig);
-    
+
         } catch (Exception e) {
             e.printStackTrace();
             return Map.of("error", "Failed to process the FIT file");
-        }
-    }
-
-    // private static void printDrivetrainInfo(UserConfig userConfig) {
-    //     int[] cassetteTeeth = CassetteData.getCassette(userConfig.getCassette());
-    //     if (cassetteTeeth == null) {
-    //         System.err.println("⚠️ Warning: Unknown cassette type: " + userConfig.getCassette());
-    //     } else {
-    //         System.out.println(" Cassette: " + Arrays.toString(cassetteTeeth)
-    //                 + "\n Front chainrings: " + userConfig.getBigChainring() + ", " + userConfig.getSmallChainring());
-    //     }
-    // }
-
-    // private static UserConfig parseArguments(String[] args) {
-    //     Integer bigChainring = (args.length > 1) ? tryParseInt(args[1]) : null;
-    //     Integer smallChainring = (args.length > 2) ? tryParseInt(args[2]) : null;
-    //     Integer minCadence = (args.length > 4) ? tryParseInt(args[4]) : null;
-    //     Integer minPower = (args.length > 5) ? tryParseInt(args[5]) : null;
-    //     String cassette = (args.length > 3) ? args[3] : null;
-
-    //     return new UserConfig(minCadence, minPower, cassette, bigChainring, smallChainring);
-    // }
-
-    private static Integer tryParseInt(String value) {
-        try {
-            return Integer.valueOf(value);
-        } catch (NumberFormatException e) {
-            System.err.println("Warning: Invalid number '" + value + "' ignored.");
-            return null;
         }
     }
 
@@ -132,60 +82,6 @@ public class App {
         return gearStatsMap;
     }
 
-    //Clunky? 
-    // private static void printGearUsage(Map<String, GearStats> gearStatsMap, UserConfig config) {
-    //     System.out.println("📊 Gear usage statistics: \n");
-
-    //     List<Map.Entry<String, GearStats>> sortedGears = new ArrayList<>(gearStatsMap.entrySet());
-    //     sortedGears.sort(Comparator.comparingInt(entry
-    //             -> parseGear(entry.getKey())
-    //     ));
-
-    //     int totalRideTime = sortedGears.stream().mapToInt(entry -> entry.getValue().totalTimeSeconds).sum();
-    //     int[] cassetteTeeth = CassetteData.getCassette(config.getCassette());
-    //     int totalRedTime = 0, totalOrangeTime = 0, totalGreenTime = 0, totalUnknownTime = 0;
-
-    //     if (cassetteTeeth == null) {
-    //         System.err.println("Warning: Unknown casseette type: " + config.getCassette() + "Gear ratios are incorrect!");
-    //         cassetteTeeth = new int[0];
-    //     }
-
-    //     for (var entry : sortedGears) {
-    //         String gear = entry.getKey();
-    //         GearStats stats = entry.getValue();
-    //         int[] gearNumbers = extractGearNumbers(gear);
-    //         int frontIndex = gearNumbers[0] - 1; // Convert 1-based to 0-based index
-    //         int rearIndex = gearNumbers[1] - 1; // Convert 1-based to 0-based index
-    //         int frontTeeth = (frontIndex == 0) ? config.getSmallChainring() : config.getBigChainring();
-    //         int rearTeeth = (rearIndex >= 0 && rearIndex < cassetteTeeth.length) ? cassetteTeeth[rearIndex] : 0;
-    //         double gearRatio = (rearTeeth > 0) ? (double) frontTeeth / rearTeeth : 0;
-
-    //         if (rearIndex >= cassetteTeeth.length || rearTeeth <= 0) {  // Out of bounds or invalid gear
-    //             totalUnknownTime += stats.totalTimeSeconds;
-    //             printUnknownGear(frontTeeth, stats, totalRideTime);
-    //             continue;
-    //         }
-    //         //Write Green, Orange, Red conclusion.
-    //         String zone = classifyGearZone(rearTeeth, cassetteTeeth);
-    //         switch (zone) {
-    //             case "🔴 Red Zone" ->
-    //                 totalRedTime += stats.totalTimeSeconds;
-    //             case "🟠 Orange Zone" ->
-    //                 totalOrangeTime += stats.totalTimeSeconds;
-    //             case "🟢 Green Zone" ->
-    //                 totalGreenTime += stats.totalTimeSeconds;
-    //         }
-
-    //       //  printGearStats(gear, frontTeeth, rearTeeth, gearRatio, stats, totalRideTime);
-    //         formatGearStats(gear, frontTeeth, rearTeeth, gearRatio, stats, totalRideTime);
-    //     }
-    //     // printZoneSummary(totalRedTime, totalOrangeTime, totalGreenTime, totalRideTime);
-    //     formatZoneSummary(totalRedTime, totalOrangeTime, totalGreenTime, totalRideTime);
-
-    // }
-
-    
-
     private static Map<String, Object> getGearUsageAsJson(Map<String, GearStats> rawGearStatsMap, UserConfig config) {
               List<Map.Entry<String, GearStats>> gearStatsMap = new ArrayList<>(rawGearStatsMap.entrySet());
         gearStatsMap.sort(Comparator.comparingInt(entry
@@ -202,7 +98,9 @@ public class App {
     
         int[] cassetteTeeth = CassetteData.getCassette(config.getCassette());
         if (cassetteTeeth == null) cassetteTeeth = new int[0];
-    
+        Integer lostSecondsCounter = 0;
+        Boolean oneBySetup = config.getOneBySetup();
+
         for (Map.Entry<String, GearStats> entry : gearStatsMap) {
             String gear = entry.getKey();
             GearStats stats = entry.getValue();
@@ -218,57 +116,67 @@ public class App {
             formattedGears.add(gearJson);
     
             // ✅ Calculate time spent in each zone
-            String zone = classifyGearZone(rearTeeth, cassetteTeeth);
+            String zone = classifyGearZone(rearTeeth, cassetteTeeth, oneBySetup, frontChainring);
             switch (zone) {
                 case "🔴 Red Zone" -> totalRedTime += stats.getTotalTimeSeconds();
                 case "🟠 Orange Zone" -> totalOrangeTime += stats.getTotalTimeSeconds();
                 case "🟢 Green Zone" -> totalGreenTime += stats.getTotalTimeSeconds();
+                default -> lostSecondsCounter++;
             }
         }
-    
+
+        if (lostSecondsCounter > 60) {
+            System.out.println("Check why so many seconds are lost!");
+        }  else if (lostSecondsCounter > 600) {
+            System.out.println("Check why we fcked up!");
+            System.out.println("Lost seconds counter" + lostSecondsCounter);
+        }
         // ✅ Add the zone summary to the API response
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "File processed successfully");
         response.put("gears_used", gearStatsMap.size());
-        System.out.println(formattedGears);
+       // System.out.println(formattedGears);
         response.put("gear_analysis", formattedGears);
         response.put("zone_summary", formatZoneSummary(totalRedTime, totalOrangeTime, totalGreenTime, totalRideTime));
-    
+        System.out.println("Zone summaries" + totalRedTime + "Heijo " + totalOrangeTime + "Heijjo" + totalGreenTime + "Heijjo" + totalRideTime);
         return response;
     }
     
 
-    // private static void printUsage() {
-    //     System.err.println("⚠️ Error: Please provide the FIT file path as an argument.");
-    //     System.err.println("Usage: ./gradlew run --args=\"[big_chainring] [small_chainring] [cassette] [min_cadence] [min_power]\"");
-    //     System.err.println("Example: ./gradlew run --args=\"53 39 12shimano34 80 200\"");
-    // }
-
-    private static String classifyGearZone(int rearTeeth, int[] cassetteTeeth) {
+    private static String  classifyGearZone(int rearTeeth, int[] cassetteTeeth, boolean oneBySetup, int frontChainring) {
         int len = cassetteTeeth.length;
-        if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[len - 1] || rearTeeth == cassetteTeeth[len - 2]) {
-            return "🔴 Red Zone";
-        } else if (rearTeeth == cassetteTeeth[2] || rearTeeth == cassetteTeeth[len - 3]) {
-            return "🟠 Orange Zone";
+        System.out.println("Current frontRing" + frontChainring + oneBySetup);
+        if (oneBySetup) {
+            if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[len - 1] 
+            ) {
+                return "🔴 Red Zone";
+            } else if (rearTeeth == cassetteTeeth[2] || rearTeeth == cassetteTeeth[len - 3] || rearTeeth == cassetteTeeth[len - 2]) {
+                return "🟠 Orange Zone";
+            }
+            return "🟢 Green Zone";
+        } else {
+
+            boolean isBigRing = frontChainring == 2;
+
+            if (isBigRing) {
+                if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[len - 1]) {
+                    return "🔴 Red Zone";
+                } else if (rearTeeth == cassetteTeeth[2] || rearTeeth == cassetteTeeth[len - 3] || rearTeeth == cassetteTeeth[len - 2]) {
+                    return "🟠 Orange Zone";
+                }
+                return "🟢 Green Zone";
+            } else {
+                if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[2] || rearTeeth == cassetteTeeth[3] || rearTeeth == cassetteTeeth[len - 1]) {
+                    return "🔴 Red Zone";
+                } else if ( rearTeeth == cassetteTeeth[len - 3] || rearTeeth == cassetteTeeth[len - 2]) {
+                    return "🟠 Orange Zone";
+                }
+                return "🟢 Green Zone";
+            }
         }
-        return "🟢 Green Zone";
     }
 
-    // //Kinda bad readability. Should make the calculations and declare new variables. Not just do math inside print.
-    // private static void printUnknownGear(int frontTeeth, GearStats stats, int totalRideTime) {
-    //     double usagePercentage = (stats.totalTimeSeconds * 100.0) / totalRideTime;
-    //     System.out.printf("⚠️ Unknown Gear (%dT:??T) → ⏳ Time: %s sec (%.1f%%), 🚴 Avg Speed: %.2f km/h, Avg Cadence: %.1f, ⚡ Avg Power: %.1fW%n",
-    //             frontTeeth, timeConvert(stats.totalTimeSeconds), usagePercentage,
-    //             stats.totalSpeed.doubleValue() / stats.numRecords, (double) stats.totalCadence / stats.numRecords, (double) stats.totalPower / stats.numRecords);
-    // }
-
-    // private static void printGearStats(String gear, int frontTeeth, int rearTeeth, double gearRatio, GearStats stats, int totalRideTime) {
-    //     double usagePercentage = (stats.totalTimeSeconds * 100.0) / totalRideTime;
-    //     System.out.printf("⚙ Gear %s (%dT:%dT | Ratio: %.2f) → ⏳ Time: %s sec (%.1f%%), 🚴 Avg Speed: %.2f km/h,  Avg Cadence: %.1f, ⚡ Avg Power: %.1fW%n",
-    //             gear, frontTeeth, rearTeeth, gearRatio, timeConvert(stats.totalTimeSeconds), usagePercentage,
-    //             stats.totalSpeed.doubleValue() / stats.numRecords, (double) stats.totalCadence / stats.numRecords, (double) stats.totalPower / stats.numRecords);
-    // }
 
     private static Map<String, Object> formatGearStats( String gear, int frontTeeth, int rearTeeth, double gearRatio, GearStats stats, int totalRideTime) {
     double usagePercentage = (stats.totalTimeSeconds * 100.0) / totalRideTime;
@@ -297,7 +205,7 @@ public class App {
 
     return gearJson;
     }
-
+    // keep it for debug 
     // private static void printZoneSummary(int totalRedTime, int totalOrangeTime, int totalGreenTime, int totalRideTime) {
     //     System.out.println("\n📊 Zone Summary:");
     //     System.out.printf("🔴 Red Zone: %s (%.1f%%)%n", timeConvert(totalRedTime), (totalRedTime * 100.0) / totalRideTime);
@@ -352,16 +260,6 @@ public class App {
         }
     }
 
-    // private static void printRideSummary() {
-    //     System.out.println(" Stored ride data:");
-    //     rideRecords.forEach(ride
-    //             -> System.out.printf("⏱ Timestamp: %d, ⚙ Gear: %d:%d, Speed: %.2f km/h, Cadence: %d, ⚡ Power: %dW%n",
-    //                     ride.getTimeStamp(), ride.getFrontGear(), ride.getRearGear(), ride.getSpeed().doubleValue(),
-    //                     ride.getCadence(), ride.getPower())
-    //     );
-    //     System.out.println("\n Total records: " + rideRecords.size());
-    // }
-
     public static void processFitFile(File fitFile) {
         try (InputStream fitStream = new FileInputStream(fitFile)) {
             Decode decode = new Decode();
@@ -383,10 +281,6 @@ public class App {
                             System.out.println(" Session info received.");
                         default -> {
                           //  System.out.println("Other info");
-                         //   printMessage(mesg);
-                        //    System.out.println("📩 Message received: " + mesg.getName() + " : val is" + mesg.getValue() );
-                        //   System.out.println("Field Name: " + mesg.getName() + " → Value: " + mesg.getValue());
-
                         } // Ignore other messages
                     }
                 }
@@ -403,7 +297,7 @@ public class App {
         } 
     }
 
-    private static final int MAX_RECORDS = 10000; 
+    private static final int MAX_RECORDS = 1000000; 
 
     private static void handleRecordMessage(Mesg mesg) {
         RideData data = parseRecord(mesg);
@@ -436,7 +330,7 @@ public class App {
     }
 
     private static void handleEventMessage(Mesg mesg) {
-
+    
         for (var field : mesg.getFields()) {
             if (field.getName().equals("event")) {
                 Short eventValue = (Short) field.getValue();
@@ -463,11 +357,11 @@ public class App {
     }
 
     private static void updateFrontGear(Mesg mesg) {
-        System.out.println("🚴 Front gear change detected!");
+      //  System.out.println("🚴 Front gear change detected!");
         for (var field : mesg.getFields()) {
             if ("front_gear_num".equals(field.getName())) {
                 currentFrontGear = (Short) field.getValue();
-                System.out.println("🔄 New Front Gear: " + currentFrontGear);
+               // System.out.println("🔄 New Front Gear: " + currentFrontGear);
             }
         }
     }
