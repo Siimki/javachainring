@@ -43,7 +43,7 @@ public class GearAnalysisController {
         File convertedFile = null; // Declare here so it's accessible in try & finally
         try {
             convertedFile = convertMultipartFile(file);
-            Boolean oneBySetupBoolean = Boolean.valueOf(oneBySetup);
+            Boolean oneBySetupBoolean = "true".equalsIgnoreCase(oneBySetup);
             UserConfig userConfig = new UserConfig(minCadence, minPower, cassette, bigChainring, smallChainring, oneBySetupBoolean);
             Map<String, Object> analysisResult = App.analyzeFile(convertedFile, userConfig);
             return ResponseEntity.ok(analysisResult);
