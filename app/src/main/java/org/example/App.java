@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.ComponentScan;
 
 import com.garmin.fit.Decode;
@@ -110,13 +109,13 @@ public class App {
             int frontChainring = (frontIndex == 0) ? config.getSmallChainring() : config.getBigChainring();
             int rearTeeth = (rearIndex >= 0 && rearIndex < cassetteTeeth.length) ? cassetteTeeth[rearIndex] : 0;
             double gearRatio = (rearTeeth > 0) ? (double) frontChainring / rearTeeth : 0;
-    
+            
             // ✅ Format stats into JSON
             Map<String, Object> gearJson = formatGearStats(gear, frontChainring, rearTeeth, gearRatio, stats, totalRideTime);
             formattedGears.add(gearJson);
     
             // ✅ Calculate time spent in each zone
-            String zone = classifyGearZone(rearTeeth, cassetteTeeth, oneBySetup, frontChainring);
+            String zone = classifyGearZone(rearTeeth, cassetteTeeth, oneBySetup, frontIndex);
             switch (zone) {
                 case "🔴 Red Zone" -> totalRedTime += stats.getTotalTimeSeconds();
                 case "🟠 Orange Zone" -> totalOrangeTime += stats.getTotalTimeSeconds();
@@ -146,32 +145,42 @@ public class App {
 
     private static String  classifyGearZone(int rearTeeth, int[] cassetteTeeth, boolean oneBySetup, int frontChainring) {
         int len = cassetteTeeth.length;
-        System.out.println("Current frontRing" + frontChainring + oneBySetup);
+       // System.out.println("Current frontRing" + frontChainring + oneBySetup + rearTeeth);
         if (oneBySetup) {
-            if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[len - 1] 
-            ) {
+            if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[len - 1] ) {
+           //     System.out.println("Oneby red");
                 return "🔴 Red Zone";
             } else if (rearTeeth == cassetteTeeth[2] || rearTeeth == cassetteTeeth[len - 3] || rearTeeth == cassetteTeeth[len - 2]) {
+            //    System.out.println("Oneby orange");
                 return "🟠 Orange Zone";
             }
+          //  System.out.println("Oneby green");
             return "🟢 Green Zone";
         } else {
 
-            boolean isBigRing = frontChainring == 2;
-
-            if (isBigRing) {
-                if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[len - 1]) {
+            boolean isBigRing = frontChainring == 1;
+           // System.out.println(isBigRing + " NR Of chainring" + frontChainring + rearTeeth);
+            if (isBigRing) {   
+                if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[len - 1]  || rearTeeth == cassetteTeeth[len - 2]) {
+                 //  System.out.println("twoBy red" + frontChainring + rearTeeth);
                     return "🔴 Red Zone";
-                } else if (rearTeeth == cassetteTeeth[2] || rearTeeth == cassetteTeeth[len - 3] || rearTeeth == cassetteTeeth[len - 2]) {
+                } else if (rearTeeth == cassetteTeeth[2] || rearTeeth == cassetteTeeth[len - 3] ) {
+                  //  System.out.println("twoBy orange" + frontChainring + rearTeeth );
                     return "🟠 Orange Zone";
                 }
+              //  System.out.println("twoBy green" + frontChainring + rearTeeth);
                 return "🟢 Green Zone";
             } else {
-                if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[2] || rearTeeth == cassetteTeeth[3] || rearTeeth == cassetteTeeth[len - 1]) {
+               // System.out.println(isBigRing + " NR Of chainring" + frontChainring + rearTeeth);
+               // System.out.println("Do i come here more times? ");
+                if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[len - 4] || rearTeeth == cassetteTeeth[len - 3] || rearTeeth == cassetteTeeth[len - 2] || rearTeeth == cassetteTeeth[len - 1]) {
+                //    System.out.println("twoBy red small" + frontChainring + rearTeeth);
                     return "🔴 Red Zone";
-                } else if ( rearTeeth == cassetteTeeth[len - 3] || rearTeeth == cassetteTeeth[len - 2]) {
+                } else if ( rearTeeth == cassetteTeeth[len - 5] || rearTeeth == cassetteTeeth[1]) {
+                 //   System.out.println("twoBy orange small" + frontChainring + rearTeeth);
                     return "🟠 Orange Zone";
                 }
+               // System.out.println("Two by green smaal" + rearTeeth);
                 return "🟢 Green Zone";
             }
         }
