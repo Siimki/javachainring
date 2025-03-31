@@ -27,31 +27,28 @@ import com.garmin.fit.MesgListener;
 @ComponentScan("org.example.controllers")
 public class App {
 
-    private static final List<RideData> rideRecords = new ArrayList<>();
-    private static Short currentRearGear = 0;
-    private static Short currentFrontGear = 2; //Assume it is on the big chainring when starting
-
     public static Map<String, Object> analyzeFile(File fitFile, UserConfig userConfig) {
         try {
             long maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
             if (fitFile.length() > maxFileSize) {
                 return Map.of("error", "File is too large. Maximum allowed size is 10MB.");
             }
-            rideRecords.clear();  
-            System.gc(); // Should fix memory leak
-            // reset gears as well. 
-            currentRearGear = 0;
-            currentFrontGear = 2; 
+            // rideRecords.clear();  
+            // System.gc(); // Should fix memory leak
+            // // reset gears as well. 
+            // currentRearGear = 0;
+            // currentFrontGear = 2; 
+            // List<RideData> rideRecords = getRideRecords();
 
-            processFitFile(fitFile);
-            List<RideData> rideRecords = getRideRecords();
+            RideSession session = new RideSession();
+            processFitFile(fitFile, session);
             
-            if (rideRecords.isEmpty()) {
+            if (session.rideRecords.isEmpty()) {
                 return Map.of("error", "No ride data found in the FIT file.");
             }
     
-            Map<String, GearStats> gearStatsMap = analyzeGearUsage(userConfig);
-            return getGearUsageAsJson(gearStatsMap, userConfig);
+            Map<String, GearStats> gearStatsMap = analyzeGearUsage(session, userConfig);
+            return getGearUsageAsJson(gearStatsMap, userConfig, session);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -59,10 +56,10 @@ public class App {
         }
     }
 
-    private static Map<String, GearStats> analyzeGearUsage(UserConfig config) {
+    private static Map<String, GearStats> analyzeGearUsage(RideSession session, UserConfig config) {
         Map<String, GearStats> gearStatsMap = new HashMap<>();
 
-        for (RideData ride : rideRecords) {
+        for (RideData ride : session.rideRecords) {
             if (config.getMinCadence() != null && ride.getCadence() < config.getMinCadence()) {
                 continue;
             }
@@ -81,17 +78,17 @@ public class App {
         return gearStatsMap;
     }
 
-    private static Map<String, Object> getGearUsageAsJson(Map<String, GearStats> rawGearStatsMap, UserConfig config) {
-              List<Map.Entry<String, GearStats>> gearStatsMap = new ArrayList<>(rawGearStatsMap.entrySet());
+    private static Map<String, Object> getGearUsageAsJson(Map<String, GearStats> rawGearStatsMap, UserConfig config, RideSession session) {
+        List<Map.Entry<String, GearStats>> gearStatsMap = new ArrayList<>(rawGearStatsMap.entrySet());
         gearStatsMap.sort(Comparator.comparingInt(entry
-                -> parseGear(entry.getKey())
+            -> parseGear(entry.getKey())
         ));
 
       
         List<Map<String, Object>> formattedGears = new ArrayList<>();
         
         int totalRideTime = gearStatsMap.stream()
-                .mapToInt(entry -> entry.getValue().getTotalTimeSeconds()).sum();
+            .mapToInt(entry -> entry.getValue().getTotalTimeSeconds()).sum();
     
         int totalRedTime = 0, totalOrangeTime = 0, totalGreenTime = 0;
     
@@ -138,7 +135,6 @@ public class App {
        // System.out.println(formattedGears);
         response.put("gear_analysis", formattedGears);
         response.put("zone_summary", formatZoneSummary(totalRedTime, totalOrangeTime, totalGreenTime, totalRideTime));
-        System.out.println("Zone summaries" + totalRedTime + "Heijo " + totalOrangeTime + "Heijjo" + totalGreenTime + "Heijjo" + totalRideTime);
         return response;
     }
     
@@ -269,7 +265,7 @@ public class App {
         }
     }
 
-    public static void processFitFile(File fitFile) {
+    public static void processFitFile(File fitFile, RideSession session) {
         try (InputStream fitStream = new FileInputStream(fitFile)) {
             Decode decode = new Decode();
             MesgBroadcaster mesgBroadcaster = new MesgBroadcaster(decode);
@@ -283,9 +279,9 @@ public class App {
 
                     switch (mesg.getName()) {
                         case "record" ->
-                            handleRecordMessage(mesg);
+                            handleRecordMessage(mesg, session);
                         case "event" ->
-                            handleEventMessage(mesg);
+                            handleEventMessage(mesg, session);
                         case "session" ->
                             System.out.println(" Session info received.");
                         default -> {
@@ -308,18 +304,18 @@ public class App {
 
     private static final int MAX_RECORDS = 1000000; 
 
-    private static void handleRecordMessage(Mesg mesg) {
-        RideData data = parseRecord(mesg);
+    private static void handleRecordMessage(Mesg mesg, RideSession session) {
+        RideData data = parseRecord(mesg, session);
         for (var field : mesg.getFields()) {
             Object value = field.getValue();
           //  System.out.println("Field Name in record: " + field.getName() + " → Value: " + value);
 
         }
         if (data != null) {
-            if (rideRecords.size() > MAX_RECORDS) {
-                rideRecords.remove(0); //Remove oldest entry if too many
+            if (session.rideRecords.size() > MAX_RECORDS) {
+                session.rideRecords.remove(0); //Remove oldest entry if too many
             }
-            rideRecords.add(data);
+            session.rideRecords.add(data);
         }
     }
 
@@ -338,7 +334,7 @@ public class App {
         }
     }
 
-    private static void handleEventMessage(Mesg mesg) {
+    private static void handleEventMessage(Mesg mesg, RideSession session) {
     
         for (var field : mesg.getFields()) {
             if (field.getName().equals("event")) {
@@ -349,27 +345,27 @@ public class App {
                  //   System.out.println("Field Name: " + field.getName() + " → Value: " + field.getValue());
                 if ("REAR_GEAR_CHANGE".equals(eventType)) {
                     //System.err.println("handleEventMessage: found rear gear" );
-                    updateRearGear(mesg);
+                    updateRearGear(mesg, session);
                 } else if ("FRONT_GEAR_CHANGE".equals(eventType)) {
-                    updateFrontGear(mesg);
+                    updateFrontGear(mesg, session);
                 }
             }
         }
     }
 
-    private static void updateRearGear(Mesg mesg) {
+    private static void updateRearGear(Mesg mesg, RideSession session) {
         for (var field : mesg.getFields()) {
             if ("rear_gear_num".equals(field.getName())) {
-                currentRearGear = (Short) field.getValue();
+                session.currentRearGear = (Short) field.getValue();
             }
         }
     }
 
-    private static void updateFrontGear(Mesg mesg) {
+    private static void updateFrontGear(Mesg mesg, RideSession session) {
       //  System.out.println("🚴 Front gear change detected!");
         for (var field : mesg.getFields()) {
             if ("front_gear_num".equals(field.getName())) {
-                currentFrontGear = (Short) field.getValue();
+                session.currentFrontGear = (Short) field.getValue();
                // System.out.println("🔄 New Front Gear: " + currentFrontGear);
             }
         }
@@ -379,7 +375,7 @@ public class App {
         return "Hello, FIT World!";
     }
 
-    private static RideData parseRecord(Mesg mesg) {
+    private static RideData parseRecord(Mesg mesg, RideSession session) {
         long timestamp = getFieldLong(mesg, "timestamp", (int) 0L);
         //Lets see how this behaves. I changed it from speed to enhanced_speed. Some files had no speed field.  
         BigDecimal speed = getFieldBigDecimal(mesg, "enhanced_speed", BigDecimal.ZERO);
@@ -390,7 +386,7 @@ public class App {
         // mesg.getFields().forEach(field -> {
         //     System.out.println("Field Name: " + field.getName() + " → Value: " + field.getValue());
         // });
-        return new RideData(timestamp, currentFrontGear, currentRearGear, speed, cadence, power);
+        return new RideData(timestamp, session.currentFrontGear, session.currentRearGear, speed, cadence, power);
     }
 
     private static int getFieldInt(Mesg mesg, String fieldName, int defaultValue) {
@@ -417,9 +413,9 @@ public class App {
 
         return localDateTime.format(formatter);
     }
-    public static List<RideData> getRideRecords() {
-        return rideRecords;
-    }
+    // public static List<RideData> getRideRecords() {
+    //     return rideRecords;
+    // }
 
 }
 
