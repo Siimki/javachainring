@@ -33,8 +33,8 @@ public class GearAnalysisController {
     @PostMapping("/analyze")
     public ResponseEntity<?> analyzeGearUsage(
         @RequestParam("file") MultipartFile file,
-        @RequestParam("bigChainring") Integer bigChainring,
-        @RequestParam("smallChainring") Integer smallChainring,
+        @RequestParam(value = "bigChainring", required = false, defaultValue = "0") Integer bigChainring,
+        @RequestParam(value = "smallChainring", required = false, defaultValue = "0") Integer smallChainring,
         @RequestParam("cassette") String cassette,
         @RequestParam(value = "minCadence", required = false) Integer minCadence,
         @RequestParam(value = "minPower", required = false) Integer minPower,
