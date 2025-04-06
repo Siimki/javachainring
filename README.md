@@ -1,6 +1,11 @@
 # JAVACHAINRING 🚴‍♂️📊
 *A Java-based tool for analyzing cycling gear usage from Garmin FIT files*
 
+
+Since 2025.04 the tool is available from: 
+[gearreport.vercel.app](https://gearreport.vercel.app)
+
+
 ---
 
 ## 📌 About
@@ -31,7 +36,6 @@ JAVACHAINRING/
 │   │   ├── App.java             # Main application logic
 │   │   ├── GearStats.java       # Gear statistics tracking
 │   │   ├── RideData.java        # Data structure for ride records
-│   │   ├── RideSummary.java     # Overall ride summary
 │   └── src/test/java/org/example/
 │       ├── AppTest.java         # Unit tests
 │── README.md                    # Project documentation
@@ -50,112 +54,20 @@ JAVACHAINRING/
 
 ## 📥 Installation
 
-### 🔧 Requirements
-- **Java 21** (or compatible JDK)
-- **Gradle** (included in the project via Gradle Wrapper)
-- **Garmin FIT SDK** (required for FIT file decoding)
-
-### 📌 Setup
-1️⃣ **Clone the repository**  
-```sh
-git clone https://github.com/siimki/javachainring.git
-cd javachainring
-```
-
-2️⃣ **Add Garmin FIT SDK**  
-- Download `fit.jar` from Garmin FIT SDK  
-- Place it in `app/libs/fit.jar`  
-
-3️⃣ **Build the project**  
-```sh
-./gradlew build
-```
-
----
-
 # 🚴 Gear Usage Analysis - Usage Guide
 
 This program analyzes **gear usage from a FIT file** and helps evaluate drivetrain efficiency, gear selection, and power distribution.
 
 ---
 
-## ⚙ Running the Application
+### 🔹 Usage
 
-### 🔹 Basic Usage
-Run the application with a **FIT file** as first argument, big chainring secondary, small chainring as third and cassette as fourth argument:
+I have deployed the whole app on web now. 
+[gearreport.vercel.app](https://gearreport.vercel.app)
 
-```
-java -jar app.jar resources/example.FIT 53 39 12shimano34
-```
 
-Or via **Gradle**:
-
-```
-./gradlew run --args="resources/example.FIT 53 39 12shimano34"
-```
-
----
-
-## 📌 Command-Line Arguments
-The program accepts multiple arguments to customize the analysis.
-
-### 🔹 Required Arguments
-| Argument | Description | Example |
-|----------|-------------|---------|
-| `1st` | **FIT file path** | `resources/example.FIT` |
-| `2nd` | **Big front chainring (T)** | `53` |
-| `3rd` | **Small front chainring (T)** | `39` |
-| `4th` | **Cassette type** (see format below) | `12shimano34` |
-
-### 🔹 Optional Arguments
-You can **filter** the data based on cadence or power.
-
-| Argument | Description | Example |
-|----------|-------------|---------|
-| `5th` (Optional) | **Min Cadence (RPM)** (Exclude zero cadence) | `30` (Ignore freewheeling) |
-| `6th` (Optional) | **Min Power (W)** (Exclude low power efforts) | `200` (Ignore soft pedaling) |
-
-### Example Usage
-To analyze gear usage only when **cadence is > 0 RPM** and **power is above 200W**:
-
-```
-./gradlew run --args="resources/example.FIT 53 39 12shimano34 0 200"
-```
 This ensures that **idle coasting** or **soft pedaling** is **not included** in the calculations.
 
----
-
-## 🔹 Supported Cassettes
-The program currently supports **11, 12, and 13-speed** **Shimano and SRAM** cassettes.
-
-**🔹 Cassette Format:**  
-```
-[speed][brand][largest cog]
-```
-| Example | Meaning |
-|---------|---------|
-| `12shimano34` | **12-speed Shimano, largest cog 34T** |
-| `11sram32` | **11-speed SRAM, largest cog 32T** |
-
----
-
-## 📌 Summary of Commands
-### ✅ Run Basic Analysis
-```
-./gradlew run --args="resources/example.FIT 53 39 12shimano34"
-```
-
-### ✅ Filter Data (No Coasting, Harder Efforts Only)
-```
-./gradlew run --args="resources/example.FIT 53 39 12shimano34 1 200"
-```
-
-### ✅ Run with Java Directly
-```
-java -jar app.jar resources/example.FIT 53 39 12shimano34
-```
-
----
 
 ### 🚀 Additional Notes
 - The **front chainrings and cassette type must be specified** correctly.
@@ -200,3 +112,5 @@ In this reasearch you can find how big losses you have with crosschaining and us
 
 https://cdn.shopify.com/s/files/1/0726/7542/6606/files/cross-chaining-and-ring-size-report.pdf?v=1687253624
 
+
+Make the program work with small chainring being empty field . 
