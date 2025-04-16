@@ -29,7 +29,7 @@ public class App {
 
     public static Map<String, Object> analyzeFile(File fitFile, UserConfig userConfig) {
         try {
-            long maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
+            long maxFileSize = 15 * 1024 * 1024; // 15MB in bytes
             if (fitFile.length() > maxFileSize) {
                 return Map.of("error", "File is too large. Maximum allowed size is 10MB.");
             }
@@ -42,13 +42,16 @@ public class App {
 
             RideSession session = new RideSession();
             processFitFile(fitFile, session);
+
             
             if (session.rideRecords.isEmpty()) {
                 return Map.of("error", "No ride data found in the FIT file.");
             }
-    
+            Estimator estimator = new Estimator();
+            String suggestedChainring = estimator.estimateOptimalSingleChainring(session, userConfig);
+            System.out.println("🔧 Suggested Single Chainring: " + suggestedChainring);
             Map<String, GearStats> gearStatsMap = analyzeGearUsage(session, userConfig);
-            return getGearUsageAsJson(gearStatsMap, userConfig, session);
+            return getGearUsageAsJson(gearStatsMap, userConfig);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -78,7 +81,7 @@ public class App {
         return gearStatsMap;
     }
 
-    private static Map<String, Object> getGearUsageAsJson(Map<String, GearStats> rawGearStatsMap, UserConfig config, RideSession session) {
+    private static Map<String, Object> getGearUsageAsJson(Map<String, GearStats> rawGearStatsMap, UserConfig config) {
         List<Map.Entry<String, GearStats>> gearStatsMap = new ArrayList<>(rawGearStatsMap.entrySet());
         gearStatsMap.sort(Comparator.comparingInt(entry
             -> parseGear(entry.getKey())
@@ -157,11 +160,11 @@ public class App {
             boolean isBigRing = frontChainring == 1;
            // System.out.println(isBigRing + " NR Of chainring" + frontChainring + rearTeeth);
             if (isBigRing) {   
-                if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[1] || rearTeeth == cassetteTeeth[len - 1]  || rearTeeth == cassetteTeeth[len - 2]) {
-                 //  System.out.println("twoBy red" + frontChainring + rearTeeth);
+                if (rearTeeth == cassetteTeeth[0] ||  rearTeeth == cassetteTeeth[len - 1] || rearTeeth == cassetteTeeth[len -2] ) {
+                //    System.out.println("twoBy red" + frontChainring + "and rear" + rearTeeth);
                     return "🔴 Red Zone";
-                } else if (rearTeeth == cassetteTeeth[2] || rearTeeth == cassetteTeeth[len - 3] ) {
-                  //  System.out.println("twoBy orange" + frontChainring + rearTeeth );
+                } else if ( rearTeeth == cassetteTeeth[1]  || rearTeeth == cassetteTeeth[len - 3]) {
+                    // System.out.println("twoBy orange" + frontChainring + " and rear" + rearTeeth );
                     return "🟠 Orange Zone";
                 }
               //  System.out.println("twoBy green" + frontChainring + rearTeeth);
@@ -169,11 +172,11 @@ public class App {
             } else {
                // System.out.println(isBigRing + " NR Of chainring" + frontChainring + rearTeeth);
                // System.out.println("Do i come here more times? ");
-                if (rearTeeth == cassetteTeeth[0] || rearTeeth == cassetteTeeth[len - 4] || rearTeeth == cassetteTeeth[len - 3] || rearTeeth == cassetteTeeth[len - 2] || rearTeeth == cassetteTeeth[len - 1]) {
-                //    System.out.println("twoBy red small" + frontChainring + rearTeeth);
+                if (rearTeeth == cassetteTeeth[len - 4] || rearTeeth == cassetteTeeth[len - 3] || rearTeeth == cassetteTeeth[len - 2] || rearTeeth == cassetteTeeth[len - 1]) {
+                    // System.out.println("twoBy red small" + frontChainring + " and rear " + rearTeeth);
                     return "🔴 Red Zone";
-                } else if ( rearTeeth == cassetteTeeth[len - 5] || rearTeeth == cassetteTeeth[1]) {
-                 //   System.out.println("twoBy orange small" + frontChainring + rearTeeth);
+                } else if ( rearTeeth == cassetteTeeth[len - 5] || rearTeeth == cassetteTeeth[0]) {
+                    // System.out.println("twoBy orange small" + frontChainring + " and rear" + rearTeeth);
                     return "🟠 Orange Zone";
                 }
                // System.out.println("Two by green smaal" + rearTeeth);
@@ -274,20 +277,49 @@ public class App {
             mesgBroadcaster.addListener(new MesgListener() {
                 @Override
                 public void onMesg(Mesg mesg) {
-                    // System.out.println("📩 Message received: " + mesg.getName() );
-
-
+                     // System.out.println("📩 Message received: " + mesg.getName() );
+                     // Log developer field definitions
+                    //  System.out.println("📩 Message: " + mesg.getName());
+                    //  for (var field : mesg.getFields()) {
+                    //      String name = field.getName();
+                    //      Object value = field.getValue();
+                    //      System.out.println("   🔧 Field: " + name + " = " + value);
+                    //  }
                     switch (mesg.getName()) {
                         case "record" ->
                             handleRecordMessage(mesg, session);
                         case "event" ->
                             handleEventMessage(mesg, session);
-                        case "session" ->
-                            System.out.println(" Session info received.");
+                        case "session" -> {
+                            System.out.println("Session info received.");
+                            // for (var field : mesg.getFields()) {
+                            //     Object rawValue = field.getValue();
+                            //     if (rawValue instanceof Number) {
+                            //         short eventValue = ((Number) rawValue).shortValue();
+                            //         String eventType = com.garmin.fit.Event.getByValue(eventValue).toString();
+                            //         System.out.println("Session Event detected " + eventType);
+                            //         System.out.println("Session Field Name: " + field.getName() + " → Value: " + rawValue + " Tipe " + eventType);
+                            //     } else {
+                            //         System.out.println("Session Field Name: " + field.getName() + " → Value: " + rawValue + " (not a numeric value)");
+                            //     }
+                            // }
+                        }
                         default -> {
-                          //  System.out.println("Other info");
-                        } // Ignore other messages
+                           // System.out.println("Other info");
+                            // for (var field : mesg.getFields()) {
+                            //     Object rawValue = field.getValue();
+                            //     if (rawValue instanceof Number) {
+                            //         short eventValue = ((Number) rawValue).shortValue();
+                            //         String eventType = com.garmin.fit.Event.getByValue(eventValue).toString();
+                            //         System.out.println("Other info Event detected " + eventType);
+                            //         System.out.println("Other info Field Name: " + field.getName() + " → Value: " + rawValue + " Tipe " + eventType);
+                            //     } else {
+                            //         System.out.println("Other info Field Name: " + field.getName() + " → Value: " + rawValue + " (not a numeric value)");
+                            //     }
+                            // }
+                        }
                     }
+                    
                 }
             });
 
@@ -301,16 +333,33 @@ public class App {
             System.err.println("Error reading FIT file: " + e.getMessage());
         } 
     }
+    
+
 
     private static final int MAX_RECORDS = 1000000; 
-
     private static void handleRecordMessage(Mesg mesg, RideSession session) {
         RideData data = parseRecord(mesg, session);
-        for (var field : mesg.getFields()) {
-            Object value = field.getValue();
-          //  System.out.println("Field Name in record: " + field.getName() + " → Value: " + value);
+        // for (var field : mesg.getFields()) {
+        //     // Object value = field.getValue();
+        //     // int fieldNum = field.getNum(); // The actual field index (e.g. 30)
+        //     // System.out.println("Field #" + fieldNum + " = " + value);
+        //     // if (fieldNum == 30 && value instanceof Number) {
+        //     //     int rawGearState = ((Number) value).intValue();
+            
+        //     //     int frontIndex = rawGearState / 100;
+        //     //     int rearIndex = rawGearState % 100;
+            
+        //     //     System.out.println("🦷 Detected: Front Gear #" + frontIndex + " | Rear Gear #" + rearIndex);
+        //     // }
+            
+        //    // System.out.println("Field Name in record: " + field.getName() + " → Value: " + value);
+        // //   Long eventValue = (Long) field.getValue();
+        // //   Short eventValue2 = eventValue != null ? (short) eventValue.longValue() : null;
+        // //   String eventType = com.garmin.fit.Event.getByValue(eventValue2).toString();
+        //   //System.out.println("Event detected" + eventType);
 
-        }
+        //     //  System.out.println("Field Name: " + field.getName() + " → Value: " + field.getValue() + "Tipe " );
+        // }
         if (data != null) {
             if (session.rideRecords.size() > MAX_RECORDS) {
                 session.rideRecords.remove(0); //Remove oldest entry if too many
@@ -328,7 +377,7 @@ public class App {
             // System.out.println("Message eventType is : " + eventType);
             // System.out.println("Field Name: " + field.getName() + " → Value: " + value);
             if ("REAR_GEAR_CHANGE".equals(eventType)) {
-                System.out.println("Gear change found" + " Value is: " + value);
+                //System.out.println("Gear change found" + " Value is: " + value);
                 
             }
         }
@@ -340,9 +389,9 @@ public class App {
             if (field.getName().equals("event")) {
                 Short eventValue = (Short) field.getValue();
                 String eventType = com.garmin.fit.Event.getByValue(eventValue).toString();
-                //System.out.println("Event detected" + eventType);
+              //  System.out.println("Event detected" + eventType);
 
-                 //   System.out.println("Field Name: " + field.getName() + " → Value: " + field.getValue());
+              //    System.out.println("Field Name: " + field.getName() + " → Value: " + field.getValue() + "Tipe " + eventType);
                 if ("REAR_GEAR_CHANGE".equals(eventType)) {
                     //System.err.println("handleEventMessage: found rear gear" );
                     updateRearGear(mesg, session);
