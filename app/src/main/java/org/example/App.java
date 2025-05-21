@@ -57,6 +57,9 @@ public class App {
             return Map.of("error", "Failed to process the FIT file");
         } finally {
             session.rideRecords.clear();
+            session.rideRecords = null;
+            session = null;
+            System.gc(); //Kinda useless actually?
         }
     }
 
@@ -323,16 +326,18 @@ public class App {
                     
                 }
             });
-
+            
             if (decode.read(fitStream, mesgBroadcaster)) {
                 System.out.println(" FIT file successfully processed!");
             } else {
                 System.err.println(" Error decoding FIT file.");
             }
-
+            mesgBroadcaster = null;
+            decode = null;
         } catch (Exception e) {
             System.err.println("Error reading FIT file: " + e.getMessage());
         } 
+        
     }
     
 
