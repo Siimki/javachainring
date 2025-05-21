@@ -47,9 +47,9 @@ public class App {
             if (session.rideRecords.isEmpty()) {
                 return Map.of("error", "No ride data found in the FIT file.");
             }
-            Estimator estimator = new Estimator();
-            String suggestedChainring = estimator.estimateOptimalSingleChainring(session, userConfig);
-            System.out.println("🔧 Suggested Single Chainring: " + suggestedChainring);
+            // Estimator estimator = new Estimator();
+            // String suggestedChainring = estimator.estimateOptimalSingleChainring(session, userConfig);
+            // System.out.println("🔧 Suggested Single Chainring: " + suggestedChainring);
             Map<String, GearStats> gearStatsMap = analyzeGearUsage(session, userConfig);
             return getGearUsageAsJson(gearStatsMap, userConfig);
 
