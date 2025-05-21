@@ -56,6 +56,8 @@ public class App {
             e.printStackTrace();
             return Map.of("error", "Failed to process the FIT file");
         } finally {
+            System.out.println("🧠 Free memory: " + Runtime.getRuntime().freeMemory() / 1_000_000 + " MB");
+            System.out.println("📈 Total memory: " + Runtime.getRuntime().totalMemory() / 1_000_000 + " MB");
             session.rideRecords.clear();
             session.rideRecords = null;
             session = null;
@@ -326,7 +328,7 @@ public class App {
                     
                 }
             });
-            
+
             if (decode.read(fitStream, mesgBroadcaster)) {
                 System.out.println(" FIT file successfully processed!");
             } else {
