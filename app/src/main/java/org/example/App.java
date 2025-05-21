@@ -61,6 +61,7 @@ public class App {
             session.rideRecords.clear();
             session.rideRecords = null;
             session = null;
+            fitFile = null;
             System.gc(); //Kinda useless actually?
         }
     }
@@ -339,7 +340,7 @@ public class App {
         } catch (Exception e) {
             System.err.println("Error reading FIT file: " + e.getMessage());
         } 
-        
+        fitFile = null;
     }
     
 
