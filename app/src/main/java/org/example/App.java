@@ -28,25 +28,26 @@ import com.garmin.fit.MesgListener;
 public class App {
 
     public static Map<String, Object> analyzeFile(File fitFile, UserConfig userConfig) {
+        RideSession session = new RideSession();
         try {
             long maxFileSize = 15 * 1024 * 1024; // 15MB in bytes
             if (fitFile.length() > maxFileSize) {
                 return Map.of("error", "File is too large. Maximum allowed size is 10MB.");
             }
             // rideRecords.clear();  
-            // System.gc(); // Should fix memory leak
+        
             // // reset gears as well. 
             // currentRearGear = 0;
             // currentFrontGear = 2; 
             // List<RideData> rideRecords = getRideRecords();
-
-            RideSession session = new RideSession();
+            
             processFitFile(fitFile, session);
 
             
             if (session.rideRecords.isEmpty()) {
                 return Map.of("error", "No ride data found in the FIT file.");
             }
+            // Estimator 
             // Estimator estimator = new Estimator();
             // String suggestedChainring = estimator.estimateOptimalSingleChainring(session, userConfig);
             // System.out.println("🔧 Suggested Single Chainring: " + suggestedChainring);
@@ -56,6 +57,8 @@ public class App {
         } catch (Exception e) {
             e.printStackTrace();
             return Map.of("error", "Failed to process the FIT file");
+        } finally {
+            session.rideRecords.clear();
         }
     }
 
