@@ -33,9 +33,7 @@ public class App {
             long maxFileSize = 15 * 1024 * 1024; // 15MB in bytes
             if (fitFile.length() > maxFileSize) {
                 return Map.of("error", "File is too large. Maximum allowed size is 10MB.");
-            }
-            // rideRecords.clear();  
-        
+            }        
             // // reset gears as well. 
             // currentRearGear = 0;
             // currentFrontGear = 2; 
